@@ -2,6 +2,8 @@
 
 Automating the routine tasks in **World of Airports** can save a lot of time—especially when the right-hand event stack starts overflowing with attention icons. This project provides a Windows-based automation bot built with Python, OpenCV, and MSS that can keep your airport flowing while you focus on higher-level strategy (or grab a cup of coffee).
 
+Ofcourse you can let most of the things handled by the tower in the game, using silver planes, but this one is FREE. :)
+
 ---
 
 ## Table of Contents
