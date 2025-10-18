@@ -3,6 +3,8 @@ from __future__ import annotations
 import time
 from pathlib import Path
 from typing import Dict, List, Tuple
+import json
+from collections import Counter
 
 import cv2
 import numpy as np
@@ -17,6 +19,7 @@ import scenarios
 # Capture area ratios for the right notification column.
 RIGHT_PANEL_RELATIVE = (0.72, 0.0, 0.28, 1.0)
 ATTENTION_TEMPLATE_PATH = Path("assets/templates/attention_icon.png")
+CONFIG_PATH = Path("woa_config.json")
 
 # Template-matching parameters.
 MATCH_THRESHOLD = 0.7
@@ -46,7 +49,11 @@ def main() -> None:
 
 def _run_with_toggle(region: Dict[str, int] | Tuple[int, int, int, int]) -> None:
     """Toggle the automation on Ctrl+Space."""
-    toggle_state = {"active": False, "debounce": False}
+    toggle_state = {
+        "active": False,
+        "debounce": False,
+        "base_icon_x": _load_base_icon_x(),
+    }
     pressed_keys: set[object] = set()
 
     def has_ctrl() -> bool:
@@ -117,7 +124,17 @@ def play_game(
                     time.sleep(NO_ICON_PAUSE)
                     continue
 
-            if len(icons) > 1 and _should_skip_card_click(icons):
+            base_icon_x = None
+            if toggle_state is not None:
+                base_icon_x = toggle_state.get("base_icon_x")
+                if base_icon_x is None:
+                    inferred = _infer_base_icon_x(icons)
+                    if inferred is not None:
+                        toggle_state["base_icon_x"] = inferred
+                        _save_base_icon_x(inferred)
+                        base_icon_x = inferred
+
+            if len(icons) > 1 and _should_skip_card_click(icons, base_icon_x):
                 print("Skipped card click due to offset; evaluating scenarios.")
                 handled = _process_active_scenarios(sct, full_bbox)
                 if handled:
@@ -216,11 +233,16 @@ def _is_new_center(
     return True
 
 
-def _should_skip_card_click(icons: List[Tuple[int, int]]) -> bool:
-    """Detect when bottom icon is horizontally misaligned compared to the others."""
+def _should_skip_card_click(
+    icons: List[Tuple[int, int]], base_icon_x: int | None = None
+) -> bool:
+    """Detect when bottom icon is already selected."""
     if len(icons) <= 1:
         return False
     bottom_x = icons[-1][0]
+    if base_icon_x is not None:
+        return abs(bottom_x - base_icon_x) > SKIP_CARD_X_TOLERANCE
+    # Fall back to comparing against other icons when no baseline is known.
     for x, _ in icons[:-1]:
         if abs(bottom_x - x) <= SKIP_CARD_X_TOLERANCE:
             return False
@@ -294,6 +316,51 @@ def _scroll_to_bottom(
         time.sleep(SCROLL_PAUSE)
 
     return icons
+
+
+def _infer_base_icon_x(icons: List[Tuple[int, int]]) -> int | None:
+    """Infer the common X coordinate for unselected attention icons."""
+    if len(icons) <= 1:
+        return None
+    counts = Counter(x for x, _ in icons)
+    if not counts:
+        return None
+    common_x, count = counts.most_common(1)[0]
+    if count >= max(1, len(icons) - 1):
+        return common_x
+    return None
+
+
+def _load_base_icon_x() -> int | None:
+    data = _load_config_data()
+    value = data.get("ATTENTION_BASE_X")
+    if isinstance(value, (int, float)):
+        return int(value)
+    return None
+
+
+def _save_base_icon_x(value: int) -> None:
+    data = _load_config_data()
+    if data.get("ATTENTION_BASE_X") == value:
+        return
+    data["ATTENTION_BASE_X"] = int(value)
+    _save_config_data(data)
+    print(f"[Info] Saved attention icon base X: {value}")
+
+
+def _load_config_data() -> Dict[str, object]:
+    if CONFIG_PATH.exists():
+        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                pass
+    return {}
+
+
+def _save_config_data(data: Dict[str, object]) -> None:
+    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
 
 
 def _load_template(path: Path) -> np.ndarray:
