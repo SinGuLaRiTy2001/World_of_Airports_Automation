@@ -50,7 +50,9 @@ def _run_with_toggle(region: Dict[str, int] | Tuple[int, int, int, int]) -> None
     pressed_keys: set[object] = set()
 
     def has_ctrl() -> bool:
-        return keyboard.Key.ctrl_l in pressed_keys or keyboard.Key.ctrl_r in pressed_keys
+        return (
+            keyboard.Key.ctrl_l in pressed_keys or keyboard.Key.ctrl_r in pressed_keys
+        )
 
     def on_press(key: keyboard.Key | keyboard.KeyCode) -> None:
         pressed_keys.add(key)
@@ -101,7 +103,9 @@ def play_game(
             if len(icons) >= MAX_VISIBLE_ICONS:
                 # Too many icons; scroll to reveal the bottom entries.
                 top_x, top_y = icons[0]
-                mouse_action.move_to(panel_bbox["left"] + top_x, panel_bbox["top"] + top_y, duration=0.12)
+                mouse_action.move_to(
+                    panel_bbox["left"] + top_x, panel_bbox["top"] + top_y, duration=0.12
+                )
                 time.sleep(SCROLL_PAUSE)
                 icons = _scroll_to_bottom(sct, panel_bbox, template)
                 if not icons:
@@ -112,6 +116,7 @@ def play_game(
                 if not icons:
                     time.sleep(NO_ICON_PAUSE)
                     continue
+
             if len(icons) > 1 and _should_skip_card_click(icons):
                 print("Skipped card click due to offset; evaluating scenarios.")
                 handled = _process_active_scenarios(sct, full_bbox)
@@ -136,7 +141,7 @@ def play_game(
 
 
 def _normalize_region(
-    region: Dict[str, int] | Tuple[int, int, int, int]
+    region: Dict[str, int] | Tuple[int, int, int, int],
 ) -> Tuple[int, int, int, int]:
     if isinstance(region, dict):
         return (
