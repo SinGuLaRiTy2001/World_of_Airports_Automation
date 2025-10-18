@@ -79,6 +79,8 @@ TAXI_TO_HOLD_TEXT = "\u8fdb\u5165\u8dd1\u9053\u7b49\u5f85"
 
 TAKEOFF_BUTTON = "takeoff.png"
 TAKEOFF_TEXT = "\u8d77\u98de"
+START_MAINTENANCE_BUTTON = "start_maintenance.png"
+START_MAINTENANCE_TEXT = "\u5f00\u59cb\u7ef4\u62a4"
 
 _TEMPLATE_CACHE: Dict[str, np.ndarray] = {}
 _OCR_SCALE = 1.6
@@ -517,6 +519,35 @@ def takeoff(context: ScenarioContext) -> bool:
         abs_takeoff[1],
         move_duration=0.12,
         label="takeoff",
+    )
+    time.sleep(0.2)
+    return True
+
+
+def start_maintenance(context: ScenarioContext) -> bool:
+    """Handle the 'start maintenance' prompt."""
+    frame = context.frame
+    region = context.region
+
+    maintenance_hits = _match_template(
+        frame, START_MAINTENANCE_BUTTON, threshold=0.78, debug_label="start_maintenance"
+    )
+    if not maintenance_hits:
+        maintenance_hits = _ocr_find_keywords(
+            frame,
+            {START_MAINTENANCE_TEXT},
+            lang="chi_sim",
+            debug_label="start_maintenance_ocr",
+        )
+    if not maintenance_hits:
+        return False
+
+    abs_point = _to_absolute(region, maintenance_hits[0])
+    mouse_action.click_at(
+        abs_point[0],
+        abs_point[1],
+        move_duration=0.12,
+        label="start maintenance",
     )
     time.sleep(0.2)
     return True
