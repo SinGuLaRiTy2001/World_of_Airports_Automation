@@ -68,6 +68,7 @@ def _run_with_toggle(region: Dict[str, int] | Tuple[int, int, int, int]) -> None
             toggle_state["debounce"] = True
             if not toggle_state["active"]:
                 print("Play stopped.")
+                print("Press Ctrl + Enter to begin.")
 
     def on_release(key: keyboard.Key | keyboard.KeyCode) -> None:
         pressed_keys.discard(key)
@@ -127,19 +128,31 @@ def play_game(
             base_icon_x = None
             if toggle_state is not None:
                 base_icon_x = toggle_state.get("base_icon_x")
-                if base_icon_x is None:
+                if base_icon_x is None and len(icons) > 1:
                     inferred = _infer_base_icon_x(icons)
                     if inferred is not None:
                         toggle_state["base_icon_x"] = inferred
                         _save_base_icon_x(inferred)
                         base_icon_x = inferred
 
-            if len(icons) > 1 and _should_skip_card_click(icons, base_icon_x):
-                print("Skipped card click due to offset; evaluating scenarios.")
-                handled = _process_active_scenarios(sct, full_bbox)
-                if handled:
-                    time.sleep(1.0)
-                continue
+            if len(icons) > 1:
+                if _should_skip_card_click(icons, base_icon_x):
+                    print("Skipped card click due to offset; evaluating scenarios.")
+                    handled = _process_active_scenarios(sct, full_bbox)
+                    if handled:
+                        time.sleep(1.0)
+                    continue
+            else:
+                if base_icon_x is not None and _should_skip_card_click(
+                    icons, base_icon_x
+                ):
+                    print(
+                        "Single attention card already selected; evaluating scenarios."
+                    )
+                    handled = _process_active_scenarios(sct, full_bbox)
+                    if handled:
+                        time.sleep(1.0)
+                    continue
             target_x, target_y = icons[-1]
             # Click the bottom-most attention card.
             absolute_x = panel_bbox["left"] + target_x
@@ -237,16 +250,13 @@ def _should_skip_card_click(
     icons: List[Tuple[int, int]], base_icon_x: int | None = None
 ) -> bool:
     """Detect when bottom icon is already selected."""
-    if len(icons) <= 1:
-        return False
     bottom_x = icons[-1][0]
     if base_icon_x is not None:
         return abs(bottom_x - base_icon_x) > SKIP_CARD_X_TOLERANCE
     # Fall back to comparing against other icons when no baseline is known.
-    for x, _ in icons[:-1]:
-        if abs(bottom_x - x) <= SKIP_CARD_X_TOLERANCE:
-            return False
-    return True
+    if len(icons) <= 1:
+        return False
+    return all(abs(bottom_x - x) > SKIP_CARD_X_TOLERANCE for x, _ in icons[:-1])
 
 
 def _process_active_scenarios(sct: mss, bbox: Dict[str, int]) -> bool:
