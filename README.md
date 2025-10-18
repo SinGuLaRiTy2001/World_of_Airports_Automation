@@ -107,7 +107,7 @@ pip install -r requirements.txt
 
 3. In the console, you’ll see `Press Ctrl + Enter to begin.`  
    Use `Ctrl + Space` to start or stop the automation loop at any time.
-4. Watch the terminal output for `[Click]` messages and scenario reminders (e.g. `[Template] select_stand_title max=0.98 ...`).
+4. Watch the terminal output for `[Click]` messages and scenario reminders (e.g. `[Vision] select_stand_title max=0.98 ...`).
 5. When you’re done, hit `Ctrl + Space` to halt, then close the script with `Ctrl + C`.
 
 **Tip**: Keep the emulator window in focus; the bot does not switch windows automatically.
@@ -124,8 +124,10 @@ WorldOfAirports_Automation/
 ├── mouse_action.py          # Mouse move/click/drag/scroll helpers
 ├── scenarios.py             # Scenario-specific detection & actions
 ├── woa_bot.py               # Main automation loop
-├── woa_config.json          # Generated config (capture region, base X)
-└── README.md                # Project documentation
+├── woa_config.json          # Generated config (capture region, base X coordinates of attention cards)
+├── requirements.txt         # Required packets for this application
+├── README.md                # Project documentation
+└── LICENSE                  # MIT License
 ```
 
 ---
@@ -140,7 +142,7 @@ WorldOfAirports_Automation/
   Register it in the `handlers` tuple inside `_process_active_scenarios` (order matters).
 
 - **Tune Thresholds**  
-  See `[Template] ... max=...` output to determine whether to tweak matching thresholds.
+  See `[Vision] ... max=...` output to determine whether to tweak matching thresholds.
 
 - **Enable OCR Fallback**  
   Set `ENABLE_OCR = True` in `scenarios.py` if you prefer textual detection when templates fail (requires Tesseract + language data).
@@ -153,10 +155,10 @@ WorldOfAirports_Automation/
 ## Troubleshooting
 
 | Symptom                                    | Possible Fix                                                                 |
-|--------------------------------------------|-------------------------------------------------------------------------------|
-| No `[Click]` even when `[Template]` is high | The matching step moves on to the next element (e.g., `stand_confirm`). Ensure both templates exist or adjust thresholds. |
-| “Missing template” messages                 | The script couldn’t find the PNG referenced; verify file names/locations.     |
-| OCR fallback never fires                    | Install Tesseract and set `ENABLE_OCR = True`, or capture cleaner templates.  |
+|--------------------------------------------|------------------------------------------------------------------------------|
+| No `[Click]` even when `[Vision]` is high  | The matching step moves on to the next element (e.g., `stand_confirm`). Ensure both templates exist or adjust thresholds. |
+| “Missing template” messages                | The script couldn’t find the PNG referenced; verify file names/locations. |
+| OCR fallback never fires                   | Install Tesseract and set `ENABLE_OCR = True`, or capture cleaner templates. |
 | Hotkey slow to stop                        | The loop waits for current action to finish; if necessary, break long sleeps into shorter intervals. |
 
 ---
