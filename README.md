@@ -136,7 +136,7 @@ WorldOfAirports_Automation/
   Drop additional PNGs into `assets/templates/` and reference them in `scenarios.py`.
 
 - **Create a New Scenario**  
-  Add a function in `scenarios.py` that detects and handles the target UI.  
+  Add a function in `scenarios.py` that detects and handles the target UI, such as upgrading planes and contracts.
   Register it in the `handlers` tuple inside `_process_active_scenarios` (order matters).
 
 - **Tune Thresholds**  
