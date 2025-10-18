@@ -14,36 +14,43 @@ import mouse_action
 import scenarios
 
 
-# Relative capture window for the right-side notification column.
-RIGHT_PANEL_RELATIVE = (0.72, 0.0, 0.28, 1.0)  # left_ratio, top_ratio, width_ratio, height_ratio
+# Capture area ratios for the right notification column.
+RIGHT_PANEL_RELATIVE = (0.72, 0.0, 0.28, 1.0)
 ATTENTION_TEMPLATE_PATH = Path("assets/templates/attention_icon.png")
+
+# Template-matching parameters.
 MATCH_THRESHOLD = 0.7
 MAX_VISIBLE_ICONS = 10
+
+# Scroll behaviour.
 SCROLL_STEP_COUNT = 6
 SCROLL_DELTA = 180
 SCROLL_ATTEMPT_LIMIT = 6
 SCROLL_SAMPLE_DELAY = 0.06
 SCROLL_SETTLE_PAUSE = 0.2
-NO_ICON_PAUSE = 0.6
 SCROLL_PAUSE = 0.3
+
+# Loop pacing.
+NO_ICON_PAUSE = 0.6
 CLICK_PAUSE = 1.0
+
+# Misc helpers.
 SKIP_CARD_X_TOLERANCE = 12
 
 
 def main() -> None:
-    # Load user-defined capture area and wait for hotkey.
+    """Load user configuration and start the hotkey-controlled loop."""
     region = init_window.load_config()
     _run_with_toggle(region)
 
 
 def _run_with_toggle(region: Dict[str, int] | Tuple[int, int, int, int]) -> None:
+    """Toggle the automation on Ctrl+Space."""
     toggle_state = {"active": False, "debounce": False}
     pressed_keys: set[object] = set()
 
     def has_ctrl() -> bool:
-        return (
-            keyboard.Key.ctrl_l in pressed_keys or keyboard.Key.ctrl_r in pressed_keys
-        )
+        return keyboard.Key.ctrl_l in pressed_keys or keyboard.Key.ctrl_r in pressed_keys
 
     def on_press(key: keyboard.Key | keyboard.KeyCode) -> None:
         pressed_keys.add(key)
@@ -66,7 +73,6 @@ def _run_with_toggle(region: Dict[str, int] | Tuple[int, int, int, int]) -> None
     try:
         while True:
             if toggle_state["active"]:
-                # Enter the capture/detect/click loop while active.
                 play_game(region, toggle_state)
             time.sleep(0.1)
     finally:
@@ -95,9 +101,7 @@ def play_game(
             if len(icons) >= MAX_VISIBLE_ICONS:
                 # Too many icons; scroll to reveal the bottom entries.
                 top_x, top_y = icons[0]
-                top_abs_x = panel_bbox["left"] + top_x
-                top_abs_y = panel_bbox["top"] + top_y
-                mouse_action.move_to(top_abs_x, top_abs_y, duration=0.12)
+                mouse_action.move_to(panel_bbox["left"] + top_x, panel_bbox["top"] + top_y, duration=0.12)
                 time.sleep(SCROLL_PAUSE)
                 icons = _scroll_to_bottom(sct, panel_bbox, template)
                 if not icons:

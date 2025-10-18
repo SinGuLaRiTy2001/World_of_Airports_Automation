@@ -1,3 +1,5 @@
+"""Scenario handlers that encapsulate the in-game automation logic."""
+
 from __future__ import annotations
 
 import time
