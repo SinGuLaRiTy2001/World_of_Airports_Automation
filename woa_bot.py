@@ -279,6 +279,7 @@ def _process_active_scenarios(sct: mss, bbox: Dict[str, int]) -> bool:
         scenarios.cross_runway,
         scenarios.taxi_to_hold,
         scenarios.takeoff,
+        scenarios.start_maintenance,
     )
 
     for index, handler in enumerate(handlers):
